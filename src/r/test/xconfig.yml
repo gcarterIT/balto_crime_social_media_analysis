@@ -1,0 +1,9 @@
+default:
+  test_database:
+    driver: 'SQL Server' 
+    server: 'DESKTOP-4PC1LOK\SQLEXPRESS'
+    uid: 'publicaccess'
+    pwd: 'password'
+    port: 1433
+    database: 'AdventureWorksLT2019'
+ 

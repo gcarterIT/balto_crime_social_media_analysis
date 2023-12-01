@@ -1,0 +1,262 @@
+---
+title: "R Project Template"
+author: "gec"
+date: '2022-05-01'
+output: html_document
+---
+
+```{r}
+## ---------------------------
+##
+## Notes: 
+##
+##
+##
+##
+##
+##
+## ---------------------------
+```
+
+## Prepare Environment
+```{r}
+
+## set working directory for Mac and PC
+## ------------------------------------
+
+# setwd("*******") 
+
+## set options
+## -----------
+
+# options(scipen = 6, digits = 4) # set outputs in non-scientific notation
+# memory.limit(30000000) # increase PC (not MAC) memory allowance
+```
+
+## Load and Install Packages, and Functions
+```{r}
+library(gridExtra) # arrange multiplot in a page grid
+library(DBI)       # connects to a DBMS
+library(odbc)      # provides interface to ODBC drivers
+library(config)    # manages environment specific config values
+library(janitor)   # examine and clean dirty data
+library(dplyr)     # grammar of data manipulation
+
+# check package version
+# packageVersion("xxxx")
+
+# TODO: test for existance of library and install/load if necessary
+```
+# **Connect to Data Sources**
+- databases
+- api
+- remote files
+- local files
+- web scraping
+
+## Connect to Database(s)
+Credit: https://predictivehacks.com/how-to-connect-r-with-sql/
+```{r}
+# locate config.yml file which should be working directory:
+setwd("C:/Users/gcart/OneDrive/Documents/R/working")
+getwd()
+
+# get db connection parameters
+db <- config::get("test_database")
+
+# establish db connection
+con <- dbConnect(
+  odbc(),
+  Driver = db$driver,
+  Server = db$server,
+  UID    = db$uid,
+  PWD    = db$pwd,
+  Port   = db$port,
+  Database = db$database
+)
+
+# test connection
+DBI::dbGetQuery(con, 'SELECT top 10 
+                        AddressID
+                      FROM 
+                        SalesLT.Address')
+```
+
+
+
+
+## Setup Rmarkdown
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **Data Cleansing**
+credits: https://statisticsglobe.com/data-cleaning-r
+        https://statisticsglobe.com/subset-of-data-frame-rows-containing-na-in-r
+
+```{r}
+data <- data.frame(x1 = c(1:4, 99999, 1, NA, 1, 1, NA),   # Create example data frame
+                   x1 = c(1:5, 1, "NA", 1, 1, "NA"),
+                   x1 = c(letters[c(1:3)], 
+                          "x  x",  
+                          "x", 
+                          "   y    y y", 
+                          "x", 
+                          "a", 
+                          "a", 
+                          NA),
+                   x4 = "",
+                   x5 = NA)
+data    
+```
+
+### Modify Column Names
+```{r}
+colnames(data) <- paste0("col", 1:ncol(data))
+data  
+```
+
+### Format Missing Values
+```{r}
+# Print blank data cells
+data[data == ""]
+# Replace blanks by NA
+# --------------------
+data[data == ""] <- NA
+data
+
+# NA values formatted as string “NA”
+# ----------------------------------
+data$col2
+# reformat as NA datatype
+data$col2[data$col2 == "NA"] <- NA   
+data
+```
+
+### Remove Empty Rows & Columns
+```{r}
+# exclude rows that contain only NA values
+data <- data[rowSums(is.na(data)) != ncol(data), ]
+data
+
+# exclude columns that contain only NA values
+data <- data[ , colSums(is.na(data)) != nrow(data)]
+data 
+```
+### Remove Rows with Missing Values - USE JUDICIOUSLY AND PRUDENTLY!!
+Carefully review the quantity of missing values and the quality of missing values before removing.
+```{r}
+# extract and review rows having an NA in any column
+data[rowSums(is.na(data)) > 0, ]
+
+# extract and review rows having an NA in a specific column
+data[is.na(data$col2), ]  
+
+# remove rows with missing values
+data <- na.omit(data) 
+data 
+
+```
+### Remove Duplicates
+```{r}
+data <- unique(data)
+data
+```
+
+### Modify Column Classes to the Appropriate Data Types
+type.convert 'decides' the most appropriate data type to convert to, so subsequently review thw conversion and determine if results are as expected. Further conversion or reversion may be necessary.
+```{r}
+# determine classes of current columns
+sapply(data, class)
+
+# 
+data <- type.convert(data, as.is = TRUE)
+sapply(data, class)
+```
+
+### If Needed, Delete Spaces Found in Character Strings
+```{r}
+data$col3 <- gsub(" ", "", data$col3)
+data
+```
+
+### If Needed, cleanup column names for clarity
+```{r}
+# create a dataframe with problematic column names
+# - parse case and separators consistently
+# - replaces special characters and spaces
+# - fills empty column name
+# - differentitates dupliocate column names 
+# - change # and % to literals
+df <- as.data.frame(matrix(ncol = 7))
+names(df) <- c("firstCol", "$secondCOL", "", " ", "#column", "REPEAT_VALUE", "REPEAT_VALUE")
+df
+
+df %>%
+  clean_names() 
+```
+
+
+
+
+
+# **Exploratory Data Analysis**
+### Determining and omitting outliers
+Credits: https://statisticsbyjim.com/basics/remove-outliers/
+         https://www.reneshbedre.com/blog/find-outliers.html
+
+If the outliers are determined to be errors or a result of unusual circumstances they can probably be omitted. If they occur naturally in the population, they should be retained.
+```{r}
+# identifying outliers in col1
+data$col1[data$col1 %in% boxplot.stats(data$col1)$out]
+
+par(mfrow = c(1, 3)) # align plots
+hist(data$col1, main = "Histogram- before")
+boxplot(data$col1, main = "Boxplot - before")
+qqnorm(data$col1, main = "Normal Q-Q plot - before")
+
+# remove outliers
+data <- data[! data$col1 %in% boxplot.stats(data$col1)$out, ]
+data 
+
+par(mfrow = c(1, 3)) # align plots
+hist(data$col1, main = "Histogram - after")
+boxplot(data$col1, main = "Boxplot - after")
+qqnorm(data$col1, main = "Normal Q-Q plot - after")
+```
+### Creating 'super' categories from existing categories
+```{r}
+#  combine categories “a”, “b”, and “c” in a 'super' category “a”
+data$col3[data$col3 %in% c("b", "c")] <- "a"
+data 
+```
+
+
+
+
+
+
+
+
+
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

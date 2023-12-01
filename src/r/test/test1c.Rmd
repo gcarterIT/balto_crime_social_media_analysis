@@ -1,0 +1,71 @@
+---
+title: "test1a"
+author: "gec"
+date: '2022-05-04'
+output: html_document
+---
+
+```{r}
+#library(gridExtra)
+#library(DBI)
+#library(odbc)
+#library(config)
+```
+
+
+## Load and Install Packages, and Functions
+```{r}
+# list all the packages needed by this script
+# necessary_packages <- c("xxxx", "xxxx", "xxxx", "etc")
+necessary_packages <- c("gridExtra",
+                        "DBI",
+                        "odbc",
+                        "config")
+
+# list all packages found uninstalled
+not_installed <- necessary_packages[!(necessary_packages %in% installed.packages()[ , "Package"])]
+
+# install those packages found unoistalled
+if(length(not_installed)) install.packages(not_installed, repos = "http://cran.us.r-project.org")
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+# set config.yml file path
+setwd("C:/Users/gcart/OneDrive/Documents/R/working")
+getwd()
+
+# get db connection parameters
+db <- config::get("test_database")
+
+# establish db connection
+con <- dbConnect(
+  odbc(),
+  Driver = db$driver,
+  Server = db$server,
+  UID    = db$uid,
+  PWD    = db$pwd,
+  Port   = db$port,
+  Database = db$database
+)
+
+# test connection
+DBI::dbGetQuery(con, 'SELECT top 10 
+                        AddressID
+                      FROM 
+                        SalesLT.Address')
+```
+
+## Setup Rmarkdown
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```

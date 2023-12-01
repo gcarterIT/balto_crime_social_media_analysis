@@ -1,0 +1,84 @@
+---
+title: "twitter_sentiment_analysis"
+author: "George Carrter"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+##  sources
+```{r}
+# https://towardsdatascience.com/an-intro-to-sentiment-analysis-in-r-how-does-twitter-feel-about-baker-mayfield-cda513ed0b78
+
+# accessing twitter api
+# https://developer.twitter.com/en/docs/tutorials/getting-started-with-r-and-v2-of-the-twitter-api
+```
+
+
+
+## load libraries
+
+```{r}
+library(rtweet)
+library(stopwords) 
+library(dplyr) 
+library(tidyr) 
+library(tidytext) 
+library(wordcloud)
+library(devtools)
+library(tidyverse)      
+library(stringr)
+library(textdata)
+```
+
+## create twitter access token
+
+```{r}
+
+Sys.setenv(BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAAII1rQEAAAAA9FApfVmT7qjVjHEWosys%2FtmXf%2Fo%3DrOzguF0IYdGFx1lyDpEIOBDmWiqWLxEwvP1u7YtWtJij2Lz06k")
+
+```
+
+## Connect to the API and Retrieve Tweets
+
+### to search for recent tweets
+```{r}
+app <- rtweet_app(bearer_token = Sys.getenv("BEARER_TOKEN"))
+auth_as(app)
+
+# auth_as(bearer_token())
+tweets <- search_tweets("money", n = 100, type = "recent")
+
+str(tweets)
+
+head(tweets)
+
+summary(tweets)
+
+```
+
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

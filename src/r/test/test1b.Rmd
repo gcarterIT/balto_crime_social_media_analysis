@@ -1,0 +1,63 @@
+---
+title: "test1a"
+author: "gec"
+date: '2022-05-04'
+output: html_document
+---
+
+```{r}
+# list all the packages needed by this script
+# necessary_packages <- c("xxxx", "xxxx", "xxxx", "etc")
+necessary_packages <- c("gridExtra",
+                        "DBI",
+                        "odbc",
+                        "config")
+
+# list all packages found uninstalled
+not_installed <- necessary_packages[!(necessary_packages %in% installed.packages()[ , "Package"])]
+
+# install those packages found unoistalled
+if(length(not_installed)) install.packages(not_installed, repos = "http://cran.us.r-project.org")
+
+loaded_packages <- library()$results[,1]
+head(loaded_packages, 100)
+
+# locate config.yml file which should be working directory:
+setwd("C:/Users/gcart/OneDrive/Documents/R/working")
+getwd()
+
+# get db connection parameters
+db <- config::get("test_database")
+
+# establish db connection
+con <- dbConnect(
+  odbc(),
+  Driver = db$driver,
+  Server = db$server,
+  UID    = db$uid,
+  PWD    = db$pwd,
+  Port   = db$port,
+  Database = db$database
+)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Setup Rmarkdown
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
